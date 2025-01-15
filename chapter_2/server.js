@@ -19,12 +19,18 @@ app.get('/', (req, res) => {
         <body style="background: pink; color: blue;">
             <h1>DATA:</h1>
             <p>${JSON.stringify(data)}</p>
+            <a href="/dashboard">Dashboard</a>
         </body>
         `)
 })
 
 app.get('/dashboard', (req, res) => {
-    res.send('<h1>Dashboard</h1>')
+    res.send(`
+        <body>
+            <h1>Dashboard</h1>
+            <a href="/">Home</a>
+        </body>
+        `)
 })
 
 
