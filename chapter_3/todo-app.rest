@@ -1,20 +1,47 @@
-### GET /
-GET http://localhost:3000
+###
+GET / GET http://localhost:3000
 
-### Register a user POST /auth/register
+### Register a user POST /AUTH/REGISTER
 POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-    "username": "gilgamesh@gmail.com",
-    "password": "123123123"
+"username": "gilgamesh@gmail.com",
+"password": "123123123"
 }
 
-### Log in a user POST /auth/login
+### Login a user POST /AUTH/LOGIN
 POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-    "username": "gilgamesh@gmail.com",
-    "password": "123123123"
+"username": "gilgamesh@gmail.com",
+"password": "123123123"
 }
+
+### Fetch all todos GET /TODOS (protected)
+GET http://localhost:3000/todos
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzM3MzQ5Mzk4LCJleHAiOjE3Mzc0MzU3OTh9.w8IDxn530iw354Cqy2Lce9NPXc6sO3la9BGGeNRI3Hc
+
+### Creates a new todo (protected)
+POST http://localhost:3000/todos
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzM3MzQ5Mzk4LCJleHAiOjE3Mzc0MzU3OTh9.w8IDxn530iw354Cqy2Lce9NPXc6sO3la9BGGeNRI3Hc
+Content-Type: application/json
+
+{
+  "task": "Finish coding the projects"
+}
+
+
+### Update a todo PUT /TODOS/:ID (protected)
+PUT http://localhost:3000/todos/2?page=4
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzM3MzQ5Mzk4LCJleHAiOjE3Mzc0MzU3OTh9.w8IDxn530iw354Cqy2Lce9NPXc6sO3la9BGGeNRI3Hc
+Content-Type: application/json
+
+{
+"completed": 1
+}
+
+### Delete a todo DELETE /TODOS/:ID (protected)
+DELETE http://localhost:3000/todos/2
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzM3MzQ5Mzk4LCJleHAiOjE3Mzc0MzU3OTh9.w8IDxn530iw354Cqy2Lce9NPXc6sO3la9BGGeNRI3Hc
