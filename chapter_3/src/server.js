@@ -1,5 +1,4 @@
 import 'dotenv/config';
-console.log('JWT_SECRET:', process.env.JWT_SECRET); // Debug log to verify
 import cors from 'cors';
 import express from 'express'
 import path, { dirname } from 'path'

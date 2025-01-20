@@ -7,51 +7,31 @@ const router = express.Router()
 
 // Register a new user endpoing /auth/register
 router.post('/register', (req, res) => {
-    const { username, password } = req.body;
+    const { username, password } = req.body
+    // save the username and an irreversibly encrypted password
+    // save gilgamesh@gmail.com | aklsdjfasdf.asdf..qwe..q.we...qwe.qw.easd
 
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' });
-    }
+    // encrypt the password
+    const hashedPassword = bcrypt.hashSync(password, 8)
 
+    // save the new user and hashed password to the db
     try {
-        console.log('Registering username:', username);
+        const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`)
+        const result = insertUser.run(username, hashedPassword)
 
-        // Debug the query execution
-        const getUser = db.prepare(`SELECT * FROM users WHERE username = ?`);
-        console.log(`Executing query: SELECT * FROM users WHERE username = '${username}'`);
-        const users = getUser.all(username); // Fetch all matching results
-        console.log('Queried users array:', users);
+        // now that we have a user, I want to add their first todo for them
+        const defaultTodo = `Hello :) Add your first todo!`
+        const insertTodo = db.prepare(`INSERT INTO todos (user_id, task) VALUES (?, ?)`)
+        insertTodo.run(result.lastInsertRowid, defaultTodo)
 
-        // Check if user exists
-        const user = users.length > 0 ? users[0] : undefined;
-        console.log('Single user object:', user);
-        if (user) {
-            return res.status(400).json({ message: 'Username already exists' });
-        }
-
-        // Hash the password
-        const hashedPassword = bcrypt.hashSync(password, 8);
-
-        // Insert the new user
-        const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`);
-        const result = insertUser.run(username, hashedPassword);
-        console.log('Inserted user result:', result);
-
-        // Add a default todo for the new user
-        const defaultTodo = `Hello :) Add your first todo!`;
-        const insertTodo = db.prepare(`INSERT INTO todos (user_id, task) VALUES (?, ?)`);
-        insertTodo.run(result.lastInsertRowid, defaultTodo);
-
-        // Generate a token and respond
-        const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' });
-        res.json({ token });
+        // create a token
+        const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
+        res.json({ token })
     } catch (err) {
-        console.error('Error during registration:', err.message);
-        res.status(503).json({ message: 'Service Unavailable: ' + err.message });
-        }
-    });
-
-
+        console.log(err.message)
+        res.sendStatus(503)
+    }
+})
 
 router.post('/login', (req, res) => {
     // we get their email, and we look up the password associated with that email in the database
@@ -62,8 +42,7 @@ router.post('/login', (req, res) => {
 
     try {
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
-        const user = getUser.all(username)
-        console.log('Queried user array:', user);
+        const user = getUser.get(username)
 
         // if we cannot find a user associated with that username, return out from the function
         if (!user) { return res.status(404).send({ message: "User not found" }) }
@@ -78,10 +57,10 @@ router.post('/login', (req, res) => {
         res.json({ token })
     } catch (err) {
         console.log(err.message)
-        res.sendStatus(503).json({message: 'Service Unavailable: ' + err.message })
-        }
+        res.sendStatus(503)
+    }
 
-    })
+})
 
 
 export default router
