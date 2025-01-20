@@ -33,6 +33,7 @@
     </section>
     <header style="display: none;">
         <h1 class="text-gradient">You have 0 open tasks.</h1>
+        <button onclick="logout()">Logout</button>
     </header>
     <nav style="display: none;" class="tab-container">
         <button onclick="changeTab('All')" class="tab-button  selected-tab">
@@ -175,89 +176,87 @@
     }
 
     async function authenticate() {
-        // access email and pass values
-        const emailVal = email.value
-        const passVal = password.value
+    const emailVal = email.value;
+    const passVal = password.value;
 
-        // guard clauses... if authenticating, return
-        if (
-            isLoading ||
-            isAuthenticating ||
-            !emailVal ||
-            !passVal ||
-            passVal.length < 6 ||
-            !emailVal.includes('@')
-        ) { return }
-
-        // reset error and set isAuthenticating to true
-        error.style.display = 'none'
-        isAuthenticating = true
-        authBtn.innerText = 'Authenticating...'
-
-        try {
-            let data
-            if (isRegistration) {
-                // register an account
-                const response = await fetch(apiBase + 'auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: emailVal, password: passVal })
-                })
-                data = await response.json()
-            } else {
-                // login an account
-                const response = await fetch(apiBase + 'auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: emailVal, password: passVal })
-                })
-                data = await response.json()
-            }
-
-            if (data.token) {
-                token = data.token
-                localStorage.setItem('token', token)
-
-                // authenicating into loading
-                authBtn.innerText = 'Loading...'
-
-                // fetch todos
-                await fetchTodos()
-
-                // show dashboard
-                showDashboard()
-            } else {
-                throw Error('❌ Failed to authenticate...')
-            }
-
-        } catch (err) {
-            console.log(err.message)
-            error.innerText = err.message
-            error.style.display = 'block'
-        } finally {
-            authBtn.innerText = 'Submit'
-            isAuthenticating = false
-        }
-
-
+    if (!emailVal || !passVal) {
+        textError.innerText = 'Please provide both email and password';
+        textError.style.display = 'block';
+        return;
     }
 
+    const endpoint = isRegistration ? 'auth/register' : 'auth/login';
+
+    try {
+        const response = await fetch(apiBase + endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: emailVal, password: passVal }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Authentication failed');
+        }
+
+        token = data.token;
+        localStorage.setItem('token', token);
+        await fetchTodos();
+        showDashboard();
+    } catch (err) {
+        console.error(err.message);
+        textError.innerText = err.message;
+        textError.style.display = 'block';
+        }
+    }
+
+
+
     function logout() {
-        // wipe states and clear cached token
+        // Clear the token from localStorage
+        localStorage.removeItem('token');
+        token = null;
+
+        // Reset UI to login view
+        authContent.style.display = 'block';
+        nav.style.display = 'none';
+        header.style.display = 'none';
+        main.style.display = 'none';
+
+        // Clear todos and UI state
+        todos = [];
+        renderTodos();
+        console.log('Logged out successfully');
     }
 
     // CRUD LOGIC
 
     async function fetchTodos() {
-        isLoading = true
+    isLoading = true;
+    try {
         const response = await fetch(apiBase + 'todos', {
-            headers: { 'Authorization': token }
-        })
-        const todosData = await response.json()
-        todos = todosData
-        isLoading = false
-        renderTodos()
+            headers: { Authorization: token },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch todos');
+        }
+
+        const data = await response.json();
+        console.log('Fetched todos:', data); // Debug: log the fetched data structure
+
+        // Assign todos based on response structure
+        todos = Array.isArray(data) ? data : []; // Assume backend sends an array or adjust as necessary
+        renderTodos();
+    } catch (err) {
+        console.error(err.message);
+        todos = []; // Default to empty array on error
+    } finally {
+        isLoading = false;
+        }
     }
+
 
     async function updateTodo(index) {
         // set task complete status to true
